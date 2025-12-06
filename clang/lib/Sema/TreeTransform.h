@@ -3190,6 +3190,14 @@ public:
                                    RParenLoc);
   }
 
+  /// Build a new spawn expression.
+  ExprResult RebuildSpawnExpr(SourceLocation SpawnLoc, Expr *SubExpr) {
+      return getSema().ActOnSpawnExpr(SpawnLoc, SubExpr);
+  }
+
+  /// Build a new join expression.
+  ExprResult RebuildJoinExpr(SourceLocation JoinLoc) { return getSema().ActOnJoinExpr(JoinLoc); }
+
   /// Build a new generic selection expression with an expression predicate.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -12966,6 +12974,26 @@ TreeTransform<Derived>::TransformConstantExpr(ConstantExpr *E) {
   return TransformExpr(E->getSubExpr());
 }
 
+template <typename Derived> ExprResult TreeTransform<Derived>::TransformSpawnExpr(SpawnExpr *E) {
+  ExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
+  if (SubExpr.isInvalid()) {
+    return ExprError();
+  }
+
+  if (!getDerived().AlwaysRebuild() && SubExpr.get() == E->getSubExpr()) {
+    return E;
+  }
+
+  return getDerived().RebuildSpawnExpr(E->getSpawnLoc(), SubExpr.get());
+}
+
+template <typename Derived> ExprResult TreeTransform<Derived>::TransformJoinExpr(JoinExpr *E) {
+  if (!getDerived().AlwaysRebuild()) {
+    return E;
+  }
+
+  return getDerived().RebuildJoinExpr(E->getJoinLoc());
+}
 template <typename Derived>
 ExprResult TreeTransform<Derived>::TransformSYCLUniqueStableNameExpr(
     SYCLUniqueStableNameExpr *E) {

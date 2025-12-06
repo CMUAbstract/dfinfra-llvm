@@ -1726,6 +1726,12 @@ enum StmtCode {
   /// A ChooseExpr record.
   EXPR_CHOOSE,
 
+  /// SPAWN_EXPR record.
+  STMT_SPAWN_EXPR,
+
+  /// JOIN_EXPR record.
+  STMT_JOIN_EXPR,
+
   /// A GNUNullExpr record.
   EXPR_GNU_NULL,
 

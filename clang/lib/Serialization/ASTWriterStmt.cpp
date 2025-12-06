@@ -1333,6 +1333,19 @@ void ASTStmtWriter::VisitChooseExpr(ChooseExpr *E) {
   Code = serialization::EXPR_CHOOSE;
 }
 
+void ASTStmtWriter::VisitSpawnExpr(SpawnExpr *E) {
+    VisitExpr(E);
+    Record.AddStmt(E->getSubExpr());
+    Record.AddSourceLocation(E->getSpawnLoc());
+    Code = serialization::STMT_SPAWN_EXPR;
+}
+
+void ASTStmtWriter::VisitJoinExpr(JoinExpr *E) {
+    VisitExpr(E);
+    Record.AddSourceLocation(E->getJoinLoc());
+    Code = serialization::STMT_JOIN_EXPR;
+}
+
 void ASTStmtWriter::VisitGNUNullExpr(GNUNullExpr *E) {
   VisitExpr(E);
   Record.AddSourceLocation(E->getTokenLocation());

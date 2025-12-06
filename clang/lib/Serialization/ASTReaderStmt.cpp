@@ -1383,6 +1383,17 @@ void ASTStmtReader::VisitGNUNullExpr(GNUNullExpr *E) {
   E->setTokenLocation(readSourceLocation());
 }
 
+void ASTStmtReader::VisitSpawnExpr(SpawnExpr *E) {
+    VisitExpr(E);
+    E->SubExpr = Record.readSubStmt();
+    E->SpawnLoc = readSourceLocation();
+}
+
+void ASTStmtReader::VisitJoinExpr(JoinExpr *E) {
+    VisitExpr(E);
+    E->JoinLoc = readSourceLocation();
+}
+
 void ASTStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   VisitExpr(E);
   SmallVector<Expr *, 16> Exprs;

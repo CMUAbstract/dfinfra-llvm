@@ -1195,6 +1195,24 @@ Parser::ParseCastExpression(CastParseKind ParseKind, bool isAddressOfOperand,
                            // unary-expression: '__alignof' '(' type-name ')'
   case tok::kw_sizeof:     // unary-expression: 'sizeof' unary-expression
                            // unary-expression: 'sizeof' '(' type-name ')'
+  case tok::kw_spawn: {
+      SourceLocation SpawnLoc = ConsumeToken();
+      ExprResult SubExpr = ParseCastExpression(CastParseKind::AnyCastExpr);
+      if (SubExpr.isInvalid()) {
+          return ExprError();
+      }
+      return Actions.ActOnSpawnExpr(SpawnLoc, SubExpr.get());
+  }
+  case tok::kw_join: {
+      SourceLocation JoinLoc = ConsumeToken();
+      if (Tok.is(tok::l_paren)) {
+          ConsumeParen();
+          if (Tok.is(tok::r_paren)) {
+              ConsumeParen();
+          }
+      }
+      return Actions.ActOnJoinExpr(JoinLoc);
+  }
   // unary-expression: '__datasizeof' unary-expression
   // unary-expression: '__datasizeof' '(' type-name ')'
   case tok::kw___datasizeof:

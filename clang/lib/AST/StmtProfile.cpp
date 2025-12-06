@@ -1601,6 +1601,14 @@ void StmtProfiler::VisitChooseExpr(const ChooseExpr *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitSpawnExpr(const SpawnExpr *S) {
+  VisitExpr(S);
+}
+
+void StmtProfiler::VisitJoinExpr(const JoinExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitGNUNullExpr(const GNUNullExpr *S) {
   VisitExpr(S);
 }

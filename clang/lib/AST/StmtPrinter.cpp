@@ -2933,6 +2933,13 @@ void StmtPrinter::VisitHLSLOutArgExpr(HLSLOutArgExpr *Node) {
   PrintExpr(Node->getArgLValue());
 }
 
+void StmtPrinter::VisitSpawnExpr(SpawnExpr *Node) {
+    OS << "spawn ";
+    PrintExpr(Node->getSubExpr());
+}
+
+void StmtPrinter::VisitJoinExpr(JoinExpr *Node) { OS << "join()"; }
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
