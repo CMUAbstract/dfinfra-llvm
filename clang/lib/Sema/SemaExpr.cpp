@@ -16157,6 +16157,14 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
                                   resType, VK, OK, RPLoc, CondIsTrue);
 }
 
+ExprResult Sema::ActOnSpawnExpr(SourceLocation SpawnLoc, Expr *SubExpr) {
+    return new (Context) SpawnExpr(SpawnLoc, SubExpr);
+}
+
+ExprResult Sema::ActOnJoinExpr(SourceLocation JoinLoc) {
+  return new (Context) JoinExpr(JoinLoc, Context.VoidTy);
+}
+
 //===----------------------------------------------------------------------===//
 // Clang Extensions.
 //===----------------------------------------------------------------------===//

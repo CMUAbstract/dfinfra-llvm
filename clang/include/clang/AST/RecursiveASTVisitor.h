@@ -2790,6 +2790,8 @@ DEF_TRAVERSE_STMT(BlockExpr, {
 })
 
 DEF_TRAVERSE_STMT(ChooseExpr, {})
+DEF_TRAVERSE_STMT(SpawnExpr, {})
+DEF_TRAVERSE_STMT(JoinExpr, {})
 DEF_TRAVERSE_STMT(CompoundLiteralExpr, {
   TRY_TO(TraverseTypeLoc(S->getTypeSourceInfo()->getTypeLoc()));
 })

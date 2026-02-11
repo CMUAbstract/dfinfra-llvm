@@ -7092,6 +7092,9 @@ public:
                              Expr *LHSExpr, Expr *RHSExpr,
                              SourceLocation RPLoc);
 
+  ExprResult ActOnSpawnExpr(SourceLocation SpawnLoc, Expr *SubExpr);
+  ExprResult ActOnJoinExpr(SourceLocation JoinLoc);
+
   // __builtin_va_arg(expr, type)
   ExprResult ActOnVAArg(SourceLocation BuiltinLoc, Expr *E, ParsedType Ty,
                         SourceLocation RPLoc);

@@ -114,6 +114,10 @@ def StmtExpr : StmtNode<Expr>;
 def ChooseExpr : StmtNode<Expr>;
 def GNUNullExpr : StmtNode<Expr>;
 
+// Spawn Join Extensions
+def SpawnExpr : StmtNode<Expr>;
+def JoinExpr : StmtNode<Expr>;
+
 // C++ Expressions.
 def CXXOperatorCallExpr : StmtNode<CallExpr>;
 def CXXMemberCallExpr : StmtNode<CallExpr>;

@@ -2819,3 +2819,13 @@ include "llvm/IR/IntrinsicsDirectX.td"
 include "llvm/IR/IntrinsicsLoongArch.td"
 
 #endif // TEST_INTRINSICS_SUPPRESS_DEFS
+
+// ===----------------------------------------------------------------------===//
+// ===------- Intrinsics for Spawn Join Primitives -------------------------===//
+
+// Spawn intrinsic - takes function pointer and variadic args, returns result
+// Uses llvm_any_ty to match the return type of the spawned function
+def int_spawn : DefaultAttrsIntrinsic<[llvm_any_ty], [llvm_anyptr_ty, llvm_vararg_ty], []>;
+
+// Join intrinsic - waits for all spawned tasks to complete
+def int_join : DefaultAttrsIntrinsic<[], [], []>;

@@ -938,6 +938,8 @@ public:
   Value *VisitBlockExpr(const BlockExpr *BE);
   Value *VisitAbstractConditionalOperator(const AbstractConditionalOperator *);
   Value *VisitChooseExpr(ChooseExpr *CE);
+  Value *VisitSpawnExpr(SpawnExpr *E);
+  Value *VisitJoinExpr(JoinExpr *E);
   Value *VisitVAArgExpr(VAArgExpr *VE);
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
@@ -5460,6 +5462,43 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
 
 Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
   return Visit(E->getChosenSubExpr());
+}
+
+Value *ScalarExprEmitter::VisitSpawnExpr(SpawnExpr *E) {
+    const CallExpr *CE = dyn_cast<CallExpr>(E->getSubExpr());
+    if (!CE) {
+        CGF.ErrorUnsupported(E, "spawn of non-call expression");
+        return llvm::UndefValue::get(ConvertType(E->getType()));
+    }
+
+    // Get the callee
+    llvm::Value *Callee = CGF.EmitScalarExpr(CE->getCallee());
+
+    // Collect arguments - first arg is the function pointer
+    llvm::SmallVector<llvm::Value *, 8> Args;
+    Args.push_back(Callee);
+    for (unsigned i = 0; i < CE->getNumArgs(); ++i) {
+        Args.push_back(CGF.EmitScalarExpr(CE->getArg(i)));
+    }
+
+    // Get the result type from the spawned function's return type
+    llvm::Type *ResultTy = ConvertType(CE->getType());
+    llvm::Type *PtrTy = Callee->getType();
+
+    // Define the function type explicitly.
+    // "spawn" has the signature: ResultTy (PtrTy, ...)
+    llvm::FunctionType *FnType = llvm::FunctionType::get(ResultTy, {PtrTy}, /*isVarArg=*/true);
+
+    // Insert as a regular function named "spawn"
+    llvm::FunctionCallee SpawnFn = CGF.CGM.getModule().getOrInsertFunction("spawn", FnType);
+    return Builder.CreateCall(SpawnFn, Args);
+}
+
+Value *ScalarExprEmitter::VisitJoinExpr(JoinExpr *E) {
+    llvm::Module &M = CGF.CGM.getModule();
+    llvm::FunctionType *JoinFnTy = llvm::FunctionType::get(Builder.getVoidTy(), {}, false);
+    llvm::FunctionCallee JoinFn = M.getOrInsertFunction("__join_call", JoinFnTy);
+    return Builder.CreateCall(JoinFn);
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {

@@ -7298,6 +7298,56 @@ private:
   friend class ASTStmtWriter;
 };
 
+/// SpawnExpr - Represents a spawn expression
+class SpawnExpr : public Expr {
+    Stmt *SubExpr;
+    SourceLocation SpawnLoc;
+
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+
+  public:
+    SpawnExpr(SourceLocation SL, Expr *E)
+        : Expr(SpawnExprClass, E->getType(), E->getValueKind(), E->getObjectKind()), SubExpr(E), SpawnLoc(SL) {}
+
+    explicit SpawnExpr(EmptyShell Empty) : Expr(SpawnExprClass, Empty) {}
+
+    SourceLocation getSpawnLoc() const { return SpawnLoc; }
+    Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+    const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
+
+    SourceLocation getBeginLoc() const LLVM_READONLY { return SpawnLoc; }
+    SourceLocation getEndLoc() const LLVM_READONLY { return SubExpr->getEndLoc(); }
+
+    static bool classof(const Stmt *T) { return T->getStmtClass() == SpawnExprClass; }
+
+    child_range children() { return child_range(&SubExpr, &SubExpr + 1); }
+    const_child_range children() const { return const_child_range(&SubExpr, &SubExpr + 1); }
+};
+
+/// JoinExpr - Represents a join expression
+class JoinExpr : public Expr {
+    SourceLocation JoinLoc;
+
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+
+  public:
+    JoinExpr(SourceLocation JL, QualType Ty) : Expr(JoinExprClass, Ty, VK_PRValue, OK_Ordinary), JoinLoc(JL) {}
+
+    explicit JoinExpr(EmptyShell Empty) : Expr(JoinExprClass, Empty) {}
+
+    SourceLocation getJoinLoc() const { return JoinLoc; }
+
+    SourceLocation getBeginLoc() const LLVM_READONLY { return JoinLoc; }
+    SourceLocation getEndLoc() const LLVM_READONLY { return JoinLoc; }
+
+    static bool classof(const Stmt *T) { return T->getStmtClass() == JoinExprClass; }
+
+    child_range children() { return child_range(child_iterator(), child_iterator()); }
+    const_child_range children() const { return const_child_range(const_child_iterator(), const_child_iterator()); }
+};
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXPR_H
