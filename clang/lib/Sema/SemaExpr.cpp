@@ -16165,6 +16165,36 @@ ExprResult Sema::ActOnJoinExpr(SourceLocation JoinLoc) {
   return new (Context) JoinExpr(JoinLoc, Context.VoidTy);
 }
 
+ExprResult Sema::ActOnBulkSpawnExpr(SourceLocation BulkSpawnLoc, VarDecl *IndexVar,
+                                     Expr *Start, Expr *End, Expr *SubExpr) {
+    // SubExpr must be a call expression so we can locate the index argument.
+    const CallExpr *CE = dyn_cast<CallExpr>(SubExpr);
+    if (!CE) {
+        Diag(BulkSpawnLoc, diag::err_typecheck_call_not_function)
+            << SubExpr->getSourceRange();
+        return ExprError();
+    }
+
+    // Find which argument in the call is a reference to the index variable.
+    unsigned InductionArgIndex = UINT_MAX;
+    for (unsigned I = 0, N = CE->getNumArgs(); I < N; ++I) {
+        const DeclRefExpr *DRE =
+            dyn_cast<DeclRefExpr>(CE->getArg(I)->IgnoreParenImpCasts());
+        if (DRE && DRE->getDecl() == IndexVar) {
+            InductionArgIndex = I;
+            break;
+        }
+    }
+
+    if (InductionArgIndex == UINT_MAX) {
+        Diag(BulkSpawnLoc, diag::err_undeclared_var_use) << IndexVar->getDeclName();
+        return ExprError();
+    }
+
+    return new (Context) BulkSpawnExpr(BulkSpawnLoc, Context.VoidTy, IndexVar,
+                                       InductionArgIndex, Start, End, SubExpr);
+}
+
 //===----------------------------------------------------------------------===//
 // Clang Extensions.
 //===----------------------------------------------------------------------===//

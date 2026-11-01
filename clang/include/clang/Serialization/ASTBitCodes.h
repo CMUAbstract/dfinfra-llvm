@@ -1723,6 +1723,9 @@ enum StmtCode {
   /// JOIN_EXPR record.
   STMT_JOIN_EXPR,
 
+  /// BULK_SPAWN_EXPR record.
+  STMT_BULK_SPAWN_EXPR,
+
   /// A GNUNullExpr record.
   EXPR_GNU_NULL,
 

@@ -117,6 +117,7 @@ def GNUNullExpr : StmtNode<Expr>;
 // Spawn Join Extensions
 def SpawnExpr : StmtNode<Expr>;
 def JoinExpr : StmtNode<Expr>;
+def BulkSpawnExpr : StmtNode<Expr>;
 
 // C++ Expressions.
 def CXXOperatorCallExpr : StmtNode<CallExpr>;

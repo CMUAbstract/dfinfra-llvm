@@ -3145,6 +3145,12 @@ public:
   /// Build a new join expression.
   ExprResult RebuildJoinExpr(SourceLocation JoinLoc) { return getSema().ActOnJoinExpr(JoinLoc); }
 
+  /// Build a new bulk_spawn expression.
+  ExprResult RebuildBulkSpawnExpr(SourceLocation BulkSpawnLoc, VarDecl *IndexVar,
+                                   Expr *Start, Expr *End, Expr *SubExpr) {
+      return getSema().ActOnBulkSpawnExpr(BulkSpawnLoc, IndexVar, Start, End, SubExpr);
+  }
+
   /// Build a new generic selection expression with an expression predicate.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -12651,6 +12657,27 @@ template <typename Derived> ExprResult TreeTransform<Derived>::TransformJoinExpr
   }
 
   return getDerived().RebuildJoinExpr(E->getJoinLoc());
+}
+
+template <typename Derived> ExprResult TreeTransform<Derived>::TransformBulkSpawnExpr(BulkSpawnExpr *E) {
+  VarDecl *NewIndexVar = cast_or_null<VarDecl>(
+      getDerived().TransformDecl(E->getBulkSpawnLoc(), E->getIndexVar()));
+  if (!NewIndexVar) return ExprError();
+  ExprResult Start = getDerived().TransformExpr(E->getStart());
+  if (Start.isInvalid()) return ExprError();
+  ExprResult End = getDerived().TransformExpr(E->getEnd());
+  if (End.isInvalid()) return ExprError();
+  ExprResult SubExpr = getDerived().TransformExpr(E->getSubExpr());
+  if (SubExpr.isInvalid()) return ExprError();
+
+  if (!getDerived().AlwaysRebuild() && NewIndexVar == E->getIndexVar() &&
+      Start.get() == E->getStart() && End.get() == E->getEnd() &&
+      SubExpr.get() == E->getSubExpr()) {
+    return E;
+  }
+
+  return getDerived().RebuildBulkSpawnExpr(E->getBulkSpawnLoc(), NewIndexVar,
+                                           Start.get(), End.get(), SubExpr.get());
 }
 
 template <typename Derived>

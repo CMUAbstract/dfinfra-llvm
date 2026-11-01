@@ -1330,6 +1330,17 @@ void ASTStmtWriter::VisitJoinExpr(JoinExpr *E) {
     Code = serialization::STMT_JOIN_EXPR;
 }
 
+void ASTStmtWriter::VisitBulkSpawnExpr(BulkSpawnExpr *E) {
+    VisitExpr(E);
+    Record.AddDeclRef(E->getIndexVar());
+    Record.push_back(E->getInductionArgIndex());
+    Record.AddStmt(E->getStart());
+    Record.AddStmt(E->getEnd());
+    Record.AddStmt(E->getSubExpr());
+    Record.AddSourceLocation(E->getBulkSpawnLoc());
+    Code = serialization::STMT_BULK_SPAWN_EXPR;
+}
+
 void ASTStmtWriter::VisitGNUNullExpr(GNUNullExpr *E) {
   VisitExpr(E);
   Record.AddSourceLocation(E->getTokenLocation());

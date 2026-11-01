@@ -1385,6 +1385,16 @@ void ASTStmtReader::VisitJoinExpr(JoinExpr *E) {
     E->JoinLoc = readSourceLocation();
 }
 
+void ASTStmtReader::VisitBulkSpawnExpr(BulkSpawnExpr *E) {
+    VisitExpr(E);
+    E->IndexVar = cast<VarDecl>(Record.readDecl());
+    E->InductionArgIndex = Record.readInt();
+    E->Start = Record.readSubStmt();
+    E->End = Record.readSubStmt();
+    E->SubExpr = Record.readSubStmt();
+    E->BulkSpawnLoc = readSourceLocation();
+}
+
 void ASTStmtReader::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   VisitExpr(E);
   SmallVector<Expr *, 16> Exprs;

@@ -1556,6 +1556,56 @@ ExprResult Parser::ParseCastExpression(CastParseKind ParseKind,
       }
       return Actions.ActOnJoinExpr(JoinLoc);
   }
+  case tok::kw_bulk_spawn: {
+      // Syntax: bulk_spawn (type var, start, end) call(var, captured_args...)
+      // The index variable is declared in the header and must appear in the call.
+      SourceLocation BulkSpawnLoc = ConsumeToken();
+      if (!Tok.is(tok::l_paren))
+          return ExprError(Diag(Tok, diag::err_expected) << tok::l_paren);
+      ConsumeParen();
+
+      // Open a scope for the index variable, spanning through the call expression.
+      ParseScope BulkSpawnScope(this, Scope::DeclScope);
+
+      // Parse the index variable declaration (e.g., "uint64_t i").
+      ParsingDeclSpec DS(*this);
+      ParsedTemplateInfo TemplateInfo;
+      ParseDeclarationSpecifiers(DS, TemplateInfo, AS_none,
+                                 DeclSpecContext::DSC_normal);
+      Declarator D(DS, ParsedAttributesView::none(), DeclaratorContext::ForInit);
+      ParseDeclarator(D);
+      if (!D.getIdentifier())
+          return ExprError(Diag(Tok, diag::err_expected) << tok::identifier);
+
+      // Create the VarDecl and add it to the current scope.
+      Decl *IndexVarDecl = Actions.ActOnDeclarator(getCurScope(), D);
+      Actions.ActOnUninitializedDecl(IndexVarDecl);
+      VarDecl *IndexVar = dyn_cast_or_null<VarDecl>(IndexVarDecl);
+      if (!IndexVar)
+          return ExprError();
+
+      // Parse ", start, end)".
+      if (!Tok.is(tok::comma))
+          return ExprError(Diag(Tok, diag::err_expected) << tok::comma);
+      ConsumeToken();
+      ExprResult Start = ParseAssignmentExpression();
+      if (Start.isInvalid()) return ExprError();
+      if (!Tok.is(tok::comma))
+          return ExprError(Diag(Tok, diag::err_expected) << tok::comma);
+      ConsumeToken();
+      ExprResult End = ParseAssignmentExpression();
+      if (End.isInvalid()) return ExprError();
+      if (!Tok.is(tok::r_paren))
+          return ExprError(Diag(Tok, diag::err_expected) << tok::r_paren);
+      ConsumeParen();
+
+      // Parse the call expression with IndexVar in scope.
+      ExprResult SubExpr = ParseCastExpression(CastParseKind::AnyCastExpr);
+      if (SubExpr.isInvalid()) return ExprError();
+
+      return Actions.ActOnBulkSpawnExpr(BulkSpawnLoc, IndexVar, Start.get(), End.get(), SubExpr.get());
+      // BulkSpawnScope closes here, removing IndexVar from scope.
+  }
   // unary-expression: '__datasizeof' unary-expression
   // unary-expression: '__datasizeof' '(' type-name ')'
   case tok::kw___datasizeof:

@@ -2829,3 +2829,6 @@ def int_spawn : DefaultAttrsIntrinsic<[llvm_any_ty], [llvm_anyptr_ty, llvm_varar
 
 // Join intrinsic - waits for all spawned tasks to complete
 def int_join : DefaultAttrsIntrinsic<[], [], []>;
+
+// Bulk spawn intrinsic - spawns callee(i, captured_args...) for i in [start, end)
+def int_bulk_spawn : DefaultAttrsIntrinsic<[], [llvm_i64_ty, llvm_i64_ty, llvm_anyptr_ty, llvm_vararg_ty], []>;

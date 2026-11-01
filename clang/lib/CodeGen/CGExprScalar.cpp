@@ -940,6 +940,7 @@ public:
   Value *VisitChooseExpr(ChooseExpr *CE);
   Value *VisitSpawnExpr(SpawnExpr *E);
   Value *VisitJoinExpr(JoinExpr *E);
+  Value *VisitBulkSpawnExpr(BulkSpawnExpr *E);
   Value *VisitVAArgExpr(VAArgExpr *VE);
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
@@ -5499,6 +5500,53 @@ Value *ScalarExprEmitter::VisitJoinExpr(JoinExpr *E) {
     llvm::FunctionType *JoinFnTy = llvm::FunctionType::get(Builder.getVoidTy(), {}, false);
     llvm::FunctionCallee JoinFn = M.getOrInsertFunction("__join_call", JoinFnTy);
     return Builder.CreateCall(JoinFn);
+}
+
+Value *ScalarExprEmitter::VisitBulkSpawnExpr(BulkSpawnExpr *E) {
+    const CallExpr *CE = dyn_cast<CallExpr>(E->getSubExpr());
+    if (!CE) {
+        CGF.ErrorUnsupported(E, "bulk_spawn of non-call expression");
+        return nullptr;
+    }
+
+    // Emit start and end bounds, ensuring i64 type for the __bulk_spawn signature.
+    llvm::Type *Int64Ty = Builder.getInt64Ty();
+    llvm::Value *Start = Builder.CreateIntCast(
+        CGF.EmitScalarExpr(E->getStart()), Int64Ty, /*isSigned=*/false);
+    llvm::Value *End = Builder.CreateIntCast(
+        CGF.EmitScalarExpr(E->getEnd()), Int64Ty, /*isSigned=*/false);
+
+    // Get the callee function pointer.
+    llvm::Value *Callee = CGF.EmitScalarExpr(CE->getCallee());
+
+    // Emit the induction_arg_index so the MLIR/hardware layer knows where to
+    // inject the loop index when calling: fn(..., i, ..., captured_args...).
+    unsigned InductionArgIndex = E->getInductionArgIndex();
+    llvm::Value *InductionIdx =
+        llvm::ConstantInt::get(Builder.getInt32Ty(), InductionArgIndex);
+
+    // Build: __bulk_spawn(start, end, fn_ptr, induction_arg_index, captured_args...)
+    // The argument at InductionArgIndex in the call is the loop variable — skip it.
+    llvm::SmallVector<llvm::Value *, 8> Args;
+    Args.push_back(Start);
+    Args.push_back(End);
+    Args.push_back(Callee);
+    Args.push_back(InductionIdx);
+    for (unsigned I = 0, N = CE->getNumArgs(); I < N; ++I) {
+        if (I == InductionArgIndex)
+            continue; // hardware provides this; do not pass it as a captured arg
+        Args.push_back(CGF.EmitScalarExpr(CE->getArg(I)));
+    }
+
+    llvm::Type *VoidTy = Builder.getVoidTy();
+    llvm::Type *Int32Ty = Builder.getInt32Ty();
+    llvm::Type *PtrTy = Callee->getType();
+    llvm::FunctionType *FnType =
+        llvm::FunctionType::get(VoidTy, {Int64Ty, Int64Ty, PtrTy, Int32Ty}, /*isVarArg=*/true);
+
+    llvm::FunctionCallee BulkSpawnFn =
+        CGF.CGM.getModule().getOrInsertFunction("__bulk_spawn", FnType);
+    return Builder.CreateCall(BulkSpawnFn, Args);
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {

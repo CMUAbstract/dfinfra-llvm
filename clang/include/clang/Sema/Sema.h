@@ -7094,6 +7094,8 @@ public:
 
   ExprResult ActOnSpawnExpr(SourceLocation SpawnLoc, Expr *SubExpr);
   ExprResult ActOnJoinExpr(SourceLocation JoinLoc);
+  ExprResult ActOnBulkSpawnExpr(SourceLocation BulkSpawnLoc, VarDecl *IndexVar,
+                                Expr *Start, Expr *End, Expr *SubExpr);
 
   // __builtin_va_arg(expr, type)
   ExprResult ActOnVAArg(SourceLocation BuiltinLoc, Expr *E, ParsedType Ty,

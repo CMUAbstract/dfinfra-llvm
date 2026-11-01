@@ -1573,6 +1573,10 @@ void StmtProfiler::VisitJoinExpr(const JoinExpr *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitBulkSpawnExpr(const BulkSpawnExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitGNUNullExpr(const GNUNullExpr *S) {
   VisitExpr(S);
 }

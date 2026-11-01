@@ -7348,6 +7348,49 @@ class JoinExpr : public Expr {
     const_child_range children() const { return const_child_range(const_child_iterator(), const_child_iterator()); }
 };
 
+/// BulkSpawnExpr - Represents a bulk_spawn (type var, start, end) call(var, captured_args...).
+/// The index variable is declared in the bulk_spawn header and must appear in the call expression.
+/// InductionArgIndex records which argument position the index variable occupies so codegen
+/// can strip it; the hardware supplies the actual index i in [start, end).
+class BulkSpawnExpr : public Expr {
+    VarDecl *IndexVar;          ///< The declared loop index variable.
+    unsigned InductionArgIndex; ///< Position of IndexVar in the call's argument list.
+    Stmt *Start;
+    Stmt *End;
+    Stmt *SubExpr;
+    SourceLocation BulkSpawnLoc;
+
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+
+  public:
+    BulkSpawnExpr(SourceLocation SL, QualType Ty, VarDecl *IV, unsigned IAI,
+                  Expr *StartE, Expr *EndE, Expr *Sub)
+        : Expr(BulkSpawnExprClass, Ty, VK_PRValue, OK_Ordinary),
+          IndexVar(IV), InductionArgIndex(IAI), Start(StartE), End(EndE),
+          SubExpr(Sub), BulkSpawnLoc(SL) {}
+
+    explicit BulkSpawnExpr(EmptyShell Empty) : Expr(BulkSpawnExprClass, Empty) {}
+
+    SourceLocation getBulkSpawnLoc() const { return BulkSpawnLoc; }
+    VarDecl *getIndexVar() const { return IndexVar; }
+    unsigned getInductionArgIndex() const { return InductionArgIndex; }
+    Expr *getStart() { return cast<Expr>(Start); }
+    const Expr *getStart() const { return cast<Expr>(Start); }
+    Expr *getEnd() { return cast<Expr>(End); }
+    const Expr *getEnd() const { return cast<Expr>(End); }
+    Expr *getSubExpr() { return cast<Expr>(SubExpr); }
+    const Expr *getSubExpr() const { return cast<Expr>(SubExpr); }
+
+    SourceLocation getBeginLoc() const LLVM_READONLY { return BulkSpawnLoc; }
+    SourceLocation getEndLoc() const LLVM_READONLY { return SubExpr->getEndLoc(); }
+
+    static bool classof(const Stmt *T) { return T->getStmtClass() == BulkSpawnExprClass; }
+
+    child_range children() { return child_range(&Start, &SubExpr + 1); }
+    const_child_range children() const { return const_child_range(&Start, &SubExpr + 1); }
+};
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_AST_EXPR_H

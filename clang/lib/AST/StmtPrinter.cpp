@@ -2904,6 +2904,16 @@ void StmtPrinter::VisitSpawnExpr(SpawnExpr *Node) {
 
 void StmtPrinter::VisitJoinExpr(JoinExpr *Node) { OS << "join()"; }
 
+void StmtPrinter::VisitBulkSpawnExpr(BulkSpawnExpr *Node) {
+    OS << "bulk_spawn(";
+    PrintExpr(Node->getStart());
+    OS << ", ";
+    PrintExpr(Node->getEnd());
+    OS << ", ";
+    PrintExpr(Node->getSubExpr());
+    OS << ")";
+}
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
